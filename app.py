@@ -6,7 +6,7 @@ import os
 import json
 import threading
 from store import load_users, save_users, mark_done, is_done
-from slack import send_modal, send_message
+from slack import send_modal, send_message, notify_admin_of_done
 from tasks import handle_admin_interaction
 
 app = Flask(__name__)
@@ -85,7 +85,13 @@ def slack_interact():
     user_id = payload["user"]["id"]
 
     if payload["type"] == "view_submission":
+        comment = None
+        try:
+            comment = payload["view"]["state"]["values"]["upload_comment"]["comment_input"]["value"]
+        except:
+            comment = None
         mark_done(user_id)
+        notify_admin_of_done(user_id, comment)
         return make_response("", 200)
 
     elif payload["type"] == "block_actions":
