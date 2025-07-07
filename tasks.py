@@ -44,7 +44,25 @@ def daily_check(force=False):
 
         elif today == 4:
             if not is_done(uid):
-                send_message(uid, "⚠️ *Last Reminder!*\nPlease upload your receipts today.")
+                send_message(uid, text="Reminder", blocks=[
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "⚠️ *Last Reminder!*\nPlease upload your receipts today."
+                        }
+                    },
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "text": {"type": "plain_text", "text": "Mark as Done"},
+                                "action_id": "open_reminder_modal"
+                            }
+                        ]
+                    }
+                ])
 
         elif today == 10:
             reset_status()
