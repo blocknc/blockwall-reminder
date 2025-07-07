@@ -44,9 +44,6 @@ def daily_check():
         elif today == 4:
             send_message(user_id, "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!")
 
-def handle_admin_interaction(payload):
-    pass  # already handled in app.py
-
 def start_scheduler():
     scheduler.add_job(daily_check, 'cron', hour=9)
     scheduler.start()
