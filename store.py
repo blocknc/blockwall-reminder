@@ -1,45 +1,40 @@
 # store.py
 import json
-from datetime import datetime
+import os
 
-FILE_USERS = 'users.json'
-FILE_STATUS = 'status.json'
+USER_FILE = "users.json"
+STATUS_FILE = "status.json"
 
+if not os.path.exists(USER_FILE):
+    with open(USER_FILE, "w") as f:
+        json.dump([], f)
+
+if not os.path.exists(STATUS_FILE):
+    with open(STATUS_FILE, "w") as f:
+        json.dump({}, f)
 
 def load_users():
-    try:
-        with open(FILE_USERS, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
+    with open(USER_FILE) as f:
+        return json.load(f)
 
 def save_users(users):
-    with open(FILE_USERS, 'w') as f:
+    with open(USER_FILE, "w") as f:
         json.dump(users, f)
 
-def mark_done(user_id):
-    status = load_status()
-    month = current_month()
-    if month not in status:
-        status[month] = []
-    if user_id not in status[month]:
-        status[month].append(user_id)
-    save_status(status)
-
 def is_done(user_id):
-    status = load_status()
-    return user_id in status.get(current_month(), [])
+    with open(STATUS_FILE) as f:
+        data = json.load(f)
+    return data.get(user_id) is True
 
-def load_status():
-    try:
-        with open(FILE_STATUS, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-
-def save_status(data):
-    with open(FILE_STATUS, 'w') as f:
+def mark_done(user_id):
+    with open(STATUS_FILE) as f:
+        data = json.load(f)
+    data[user_id] = True
+    with open(STATUS_FILE, "w") as f:
         json.dump(data, f)
 
-def current_month():
-    return datetime.now().strftime('%Y-%m')
+def reset_status():
+    users = load_users()
+    new_status = {uid: False for uid in users}
+    with open(STATUS_FILE, "w") as f:
+        json.dump(new_status, f)
