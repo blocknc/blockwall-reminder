@@ -6,7 +6,7 @@ import os
 import json
 import threading
 from store import load_users, save_users, mark_done, is_done, reset_status
-from slack import send_modal, send_message, notify_admin_of_done
+from slack import send_modal, send_message
 from datetime import datetime
 
 app = Flask(__name__)
@@ -108,11 +108,10 @@ def slack_interact():
     user_id = payload["user"]["id"]
 
     if payload["type"] == "view_submission":
+        state_values = payload["view"]["state"]["values"]
         comment = None
-        try:
-            comment = payload["view"]["state"]["values"].get("upload_comment", {}).get("comment_input", {}).get("value")
-        except:
-            comment = None
+        if "upload_comment" in state_values and "comment_input" in state_values["upload_comment"]:
+            comment = state_values["upload_comment"]["comment_input"].get("value")
 
         mark_done(user_id)
         send_message(user_id, "✅ Thank you! Your receipt status has been marked as done.")
