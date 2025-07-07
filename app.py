@@ -14,30 +14,43 @@ client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 signature_verifier = SignatureVerifier(os.environ['SLACK_SIGNING_SECRET'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
-def handle_command_async(command, text, user_id):
+def handle_command_async(command, text, sender_id):
     args = text.split()
     if args[0] == 'add':
-        user = args[1].replace('<@', '').replace('>', '').replace('!', '').replace('@', '')
-        users = load_users()
-        if user not in users:
-            users.append(user)
-            save_users(users)
-            send_message(user_id, f"User <@{user}> added.")
+        user_tag = args[1].replace('<@', '').replace('>', '').replace('!', '')
+        try:
+            slack_user = client.users_info(user=user_tag)
+            slack_id = slack_user["user"]["id"]
+            display_name = slack_user["user"]["profile"].get("display_name") or slack_user["user"]["real_name"]
+            users = load_users()
+            if slack_id not in [u["id"] for u in users]:
+                users.append({"id": slack_id, "name": display_name})
+                save_users(users)
+                send_message(sender_id, f"✅ User {display_name} added.")
+            else:
+                send_message(sender_id, f"⚠️ User {display_name} is already in the list.")
+        except:
+            send_message(sender_id, f"❌ Failed to add user: {args[1]}")
+
     elif args[0] == 'remove':
-        user = args[1].replace('<@', '').replace('>', '').replace('!', '').replace('@', '')
+        user_tag = args[1].replace('<@', '').replace('>', '').replace('!', '')
         users = load_users()
-        if user in users:
-            users.remove(user)
-            save_users(users)
-            send_message(user_id, f"User <@{user}> removed.")
+        filtered = [u for u in users if u["id"] != user_tag and u["name"] != user_tag]
+        if len(filtered) < len(users):
+            save_users(filtered)
+            send_message(sender_id, f"✅ User removed.")
+        else:
+            send_message(sender_id, f"⚠️ User not found in list.")
+
     elif args[0] == 'list':
         users = load_users()
-        user_list = ', '.join([f"<@{u}>" for u in users])
-        send_message(user_id, f"Reminder list: {user_list}")
+        user_list = ', '.join([u["name"] for u in users])
+        send_message(sender_id, f"👥 Reminder list: {user_list}")
+
     elif args[0] == 'run':
         users = load_users()
-        for uid in users:
-            slack_id = uid.replace('@', '')
+        for u in users:
+            slack_id = u["id"]
             if is_done(slack_id):
                 continue
             send_message(slack_id, "📌 Monthly Receipt Reminder", blocks=[
@@ -57,19 +70,21 @@ def handle_command_async(command, text, user_id):
                     ]
                 }
             ])
-        send_message(user_id, "Manual reminder check triggered.")
+        send_message(sender_id, "Manual reminder check triggered.")
+
     elif args[0] == 'status':
         users = load_users()
         status_lines = []
         for u in users:
-            name = get_display_name(u)
-            done = is_done(u)
+            name = u["name"]
+            done = is_done(u["id"])
             status_lines.append(f"✅ {name}" if done else f"🕓 {name}")
         message = "📋 *Monthly Receipt Status Summary*\n" + "\n".join(status_lines)
         send_message(ADMIN_USER_ID, message)
+
     elif args[0] == 'reset':
         reset_status()
-        send_message(user_id, "✅ All receipt statuses have been reset for a new month.")
+        send_message(sender_id, "✅ All receipt statuses have been reset for a new month.")
 
 @app.route('/slack/commands', methods=['POST'])
 def slack_commands():
