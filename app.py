@@ -17,14 +17,14 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 def handle_command_async(command, text, user_id):
     args = text.split()
     if args[0] == 'add':
-        user = args[1].replace('<@', '').replace('>', '')
+        user = args[1].replace('<@', '').replace('>', '').replace('!', '')
         users = load_users()
         if user not in users:
             users.append(user)
             save_users(users)
             send_message(user_id, f"User <@{user}> added.")
     elif args[0] == 'remove':
-        user = args[1].replace('<@', '').replace('>', '')
+        user = args[1].replace('<@', '').replace('>', '').replace('!', '')
         users = load_users()
         if user in users:
             users.remove(user)
