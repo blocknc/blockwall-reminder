@@ -10,6 +10,29 @@ from slack import send_modal, send_message
 from datetime import datetime
 
 app = Flask(__name__)
+
+# Optional startup validation for JSON files
+try:
+    users = load_users()
+    if not isinstance(users, list):
+        raise ValueError("users.json is not a list")
+    for u in users:
+        if not isinstance(u, dict) or "id" not in u or "name" not in u:
+            raise ValueError("Invalid user entry")
+except Exception as e:
+    print(f"❌ Error loading users.json: {e}")
+    with open("users.json", "w") as f:
+        json.dump([], f)
+
+try:
+    with open("status.json") as f:
+        status_data = json.load(f)
+    if not isinstance(status_data, dict):
+        raise ValueError("status.json is not a dict")
+except Exception as e:
+    print(f"❌ Error loading status.json: {e}")
+    with open("status.json", "w") as f:
+        json.dump({}, f)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 signature_verifier = SignatureVerifier(os.environ['SLACK_SIGNING_SECRET'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
@@ -21,6 +44,8 @@ def handle_command_async(command, text, sender_id):
         try:
             if user_arg.startswith("<@") and user_arg.endswith(">"):
                 slack_id = user_arg[2:-1].replace("!", "")
+                user_info = client.users_info(user=slack_id)
+                display_name = user_info["user"]["profile"].get("display_name") or user_info["user"].get("real_name") or slack_id
             else:
                 # Try to resolve name to ID from full user list
                 all_users = client.users_list()
@@ -29,7 +54,7 @@ def handle_command_async(command, text, sender_id):
                     send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
                     return
                 slack_id = match["id"]
-            display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
+                display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_argmatch["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
             users = load_users()
             found = False
             for u in users:
@@ -55,7 +80,8 @@ def handle_command_async(command, text, sender_id):
 
     elif args[0] == 'list':
         users = load_users()
-        user_list = '\n'.join([f"• {u['name']} ({u['id']})" for u in users])
+        user_list = '
+'.join([f"• {u['name']} ({u['id']})" for u in users])
         send_message(sender_id, f"👥 Reminder list: {user_list}")
 
     elif args[0] == 'run':
