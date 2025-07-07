@@ -7,7 +7,7 @@ import json
 import threading
 from store import load_users, save_users, mark_done, is_done
 from slack import send_modal, send_message
-from tasks import handle_admin_interaction
+from tasks import handle_admin_interaction, daily_check
 
 app = Flask(__name__)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
@@ -33,6 +33,9 @@ def handle_command_async(command, text, user_id):
         users = load_users()
         user_list = ', '.join([f"<@{u}>" for u in users])
         send_message(user_id, f"Reminder list: {user_list}")
+    elif args[0] == 'run':
+        daily_check()
+        send_message(user_id, "Manual reminder check triggered.")
 
 @app.route('/slack/commands', methods=['POST'])
 def slack_commands():
