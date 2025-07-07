@@ -5,9 +5,10 @@ from slack_sdk.signature import SignatureVerifier
 import os
 import json
 import threading
-from store import load_users, save_users, mark_done, is_done
+from store import load_users, save_users, mark_done, is_done, reset_status
 from slack import send_modal, send_message, notify_admin_of_done
 from tasks import handle_admin_interaction
+from datetime import datetime
 
 app = Flask(__name__)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
@@ -56,6 +57,9 @@ def handle_command_async(command, text, user_id):
         message += f"\n✅ Done: {', '.join(done) if done else 'None'}"
         message += f"\n🕓 Pending: {', '.join(pending) if pending else 'None'}"
         send_message(ADMIN_USER_ID, message)
+    elif args[0] == 'reset':
+        reset_status()
+        send_message(user_id, "✅ All receipt statuses have been reset for a new month.")
 
 @app.route('/slack/commands', methods=['POST'])
 def slack_commands():
