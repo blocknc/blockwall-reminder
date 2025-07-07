@@ -6,7 +6,8 @@ import os
 import json
 from store import load_users, save_users, mark_done, is_done
 from slack import send_modal, send_message
-from tasks import handle_admin_interaction  # NOTE: no start_scheduler here
+from tasks import handle_admin_interaction
+from tasks import start_scheduler
 
 app = Flask(__name__)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
@@ -79,4 +80,5 @@ def slack_interact():
     return make_response("", 200)
 
 if __name__ == '__main__':
+    start_scheduler()
     app.run(port=3000)
