@@ -26,7 +26,7 @@ def slack_command():
     user_id = data.get("user_id")
 
     threading.Thread(target=handle_command_async, args=(command, text, user_id)).start()
-    return make_response("Processing...", 200)
+    return make_response("", 200)
 
 @app.route("/slack/interact", methods=["POST"])
 def slack_interact():
@@ -34,7 +34,6 @@ def slack_interact():
         return make_response("invalid request", 403)
 
     payload = json.loads(request.form["payload"])
-    print("[Slack Interact] Payload:", json.dumps(payload, indent=2))
 
     if payload["type"] == "view_submission" and payload["view"]["callback_id"] == "upload_done_modal":
         user_id = payload["user"]["id"]
@@ -48,7 +47,6 @@ def slack_interact():
 
     elif payload["type"] == "block_actions":
         action_id = payload["actions"][0]["action_id"]
-        print(f"[Slack Interact] Block Action Triggered: {action_id}")
         if action_id == "open_reminder_modal":
             send_modal(payload["trigger_id"])
         return make_response("", 200)
