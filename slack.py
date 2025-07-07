@@ -27,5 +27,17 @@ REMINDER_MODAL = {
 def send_modal(trigger_id):
     client.views_open(trigger_id=trigger_id, view=REMINDER_MODAL)
 
-def send_message(user_id, text):
-    client.chat_postMessage(channel=user_id, text=text)
+def send_message(user_id, text, blocks=None):
+    if blocks:
+        client.chat_postMessage(channel=user_id, text=text, blocks=[
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": text}
+            },
+            {
+                "type": "actions",
+                "elements": blocks
+            }
+        ])
+    else:
+        client.chat_postMessage(channel=user_id, text=text)
