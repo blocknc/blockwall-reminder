@@ -114,8 +114,8 @@ def slack_interact():
         except:
             comment = None
 
-        notify_admin_of_done(user_id, comment)
         mark_done(user_id)
+        notify_admin_of_done(user_id, comment)
         send_message(user_id, "✅ Thank you! Your receipt status has been marked as done.")
         return make_response("", 200)
 
