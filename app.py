@@ -7,7 +7,7 @@ import json
 import threading
 from store import load_users, save_users, mark_done, is_done
 from slack import send_modal, send_message
-from tasks import handle_admin_interaction, daily_check
+from tasks import handle_admin_interaction
 
 app = Flask(__name__)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
@@ -34,7 +34,16 @@ def handle_command_async(command, text, user_id):
         user_list = ', '.join([f"<@{u}>" for u in users])
         send_message(user_id, f"Reminder list: {user_list}")
     elif args[0] == 'run':
-        daily_check()
+        users = load_users()
+        for uid in users:
+            send_message(uid, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Mark as Done"},
+                    "action_id": "open_reminder_modal",
+                    "value": uid
+                }
+            ])
         send_message(user_id, "Manual reminder check triggered.")
 
 @app.route('/slack/commands', methods=['POST'])
@@ -80,7 +89,12 @@ def slack_interact():
         return make_response("", 200)
 
     elif payload["type"] == "block_actions":
-        handle_admin_interaction(payload)
+        action = payload['actions'][0]
+        if action['action_id'] == "open_reminder_modal":
+            trigger_id = payload["trigger_id"]
+            send_modal(trigger_id)
+        else:
+            handle_admin_interaction(payload)
         return make_response("", 200)
 
     return make_response("", 200)
