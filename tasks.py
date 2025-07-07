@@ -1,5 +1,6 @@
 # tasks.py
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
 from store import load_users, is_done, reset_status
 from slack import send_message
@@ -57,6 +58,15 @@ def daily_check(force=False):
         report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*\n" + "\n".join(log)
         send_message(ADMIN_USER_ID, report)
 
+def send_summary_to_admin():
+    users = load_users()
+    summary = [f"• {u['name']} – {'✅ Done' if is_done(u['id']) else '❌ Pending'}" for u in users]
+    message = "📊 *Monthly Upload Status Summary:*
+" + "\n".join(summary)
+    send_message(ADMIN_USER_ID, message)
+
 def start_scheduler():
     scheduler.add_job(daily_check, 'cron', hour=9)
+    scheduler.add_job(send_summary_to_admin, CronTrigger(day=3, hour=12, timezone='CET'))
+    scheduler.add_job(send_summary_to_admin, CronTrigger(day=4, hour=12, timezone='CET'))
     scheduler.start()
