@@ -5,7 +5,7 @@ from slack_sdk.signature import SignatureVerifier
 import os
 import json
 import threading
-from store import load_users, save_users, mark_done, is_done, reset_status
+from store import load_users, save_users, mark_done, is_done, reset_status, get_display_name
 from slack import send_modal, send_message
 from datetime import datetime
 
@@ -17,14 +17,14 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 def handle_command_async(command, text, user_id):
     args = text.split()
     if args[0] == 'add':
-        user = args[1].replace('<@', '').replace('>', '').replace('!', '')
+        user = args[1].replace('<@', '').replace('>', '').replace('!', '').replace('@', '')
         users = load_users()
         if user not in users:
             users.append(user)
             save_users(users)
             send_message(user_id, f"User <@{user}> added.")
     elif args[0] == 'remove':
-        user = args[1].replace('<@', '').replace('>', '').replace('!', '')
+        user = args[1].replace('<@', '').replace('>', '').replace('!', '').replace('@', '')
         users = load_users()
         if user in users:
             users.remove(user)
@@ -61,8 +61,9 @@ def handle_command_async(command, text, user_id):
         users = load_users()
         status_lines = []
         for u in users:
+            name = get_display_name(u)
             done = is_done(u)
-            status_lines.append(f"✅ <@{u}>" if done else f"🕓 <@{u}>")
+            status_lines.append(f"✅ {name}" if done else f"🕓 {name}")
         message = "📋 *Monthly Receipt Status Summary*\n" + "\n".join(status_lines)
         send_message(ADMIN_USER_ID, message)
     elif args[0] == 'reset':
