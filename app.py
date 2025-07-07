@@ -6,7 +6,7 @@ import os
 import json
 import threading
 from store import load_users, save_users, mark_done, is_done, get_display_name, reset_status
-from slack import send_modal, send_message, notify_admin_of_done, handle_status_command
+from slack import send_modal, send_message, notify_admin_of_done, handle_status_command, update_reminder
 from tasks import daily_check
 from datetime import datetime
 
@@ -43,6 +43,7 @@ def slack_interact():
             if comment:
                 break
         notify_admin_of_done(user_id, comment)
+        update_reminder(user_id)
         return make_response("", 200)
 
     elif payload["type"] == "block_actions":
