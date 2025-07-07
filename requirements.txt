@@ -3,3 +3,4 @@ slack_sdk
 APScheduler
 python-dotenv
 gunicorn
+pytz
