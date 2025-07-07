@@ -1,7 +1,7 @@
 # slack.py
 import os
 from slack_sdk import WebClient
-from store import is_done, get_comment, load_users
+from store import is_done, get_comment, load_users, mark_done
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
@@ -56,6 +56,9 @@ def send_message(user_id, text, blocks=None):
         print(f"❌ Failed to send message to {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
+    # store comment right here to ensure it is available
+    mark_done(user_id, comment)
+
     try:
         profile = client.users_info(user=user_id)
         display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
