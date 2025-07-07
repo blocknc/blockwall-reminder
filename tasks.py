@@ -33,11 +33,18 @@ def daily_check(force=False):
         if is_done(user_id):
             continue
 
-        message = "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
+        text = "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
         if not force and today == 4:
-            message = "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!"
+            text = "⚠️ *Final Reminder*\nPlease upload your receipts *today*. This is the last call."
 
-        send_message(user_id, message, blocks=[
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": text
+                }
+            },
             {
                 "type": "actions",
                 "elements": [
@@ -49,7 +56,9 @@ def daily_check(force=False):
                     }
                 ]
             }
-        ])
+        ]
+
+        send_message(user_id, text, blocks=blocks)
 
         log_entry = f"{'⚠️ Final notice' if not force and today == 4 else '🔁 Reminder'} sent to <@{user_id}>"
         log.append(log_entry)
