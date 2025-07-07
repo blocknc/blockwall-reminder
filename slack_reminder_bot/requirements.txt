@@ -1,4 +1,0 @@
-Flask
-slack_sdk
-APScheduler
-python-dotenv
