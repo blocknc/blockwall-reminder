@@ -56,7 +56,7 @@ def send_message(user_id, text, blocks=None):
         print(f"❌ Failed to send message to {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
-    # store comment right here to ensure it is available
+    mark_done(user_id, comment)
 
     try:
         profile = client.users_info(user=user_id)
