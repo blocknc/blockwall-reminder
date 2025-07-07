@@ -29,8 +29,7 @@ def handle_command_async(command, text, sender_id):
                     send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
                     return
                 slack_id = match["id"]
-            slack_user = client.users_info(user=user_tag)
-            slack_id = slack_user["user"]["id"]
+            display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
             display_name = slack_user["user"]["profile"].get("display_name") or slack_user["user"]["real_name"]
             users = load_users()
             if slack_id not in [u["id"] for u in users]:
