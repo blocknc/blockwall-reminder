@@ -5,8 +5,9 @@ from slack_sdk.signature import SignatureVerifier
 import os
 import json
 import threading
-from store import load_users, save_users, mark_done, is_done, get_display_name
+from store import load_users, save_users, mark_done, is_done, get_display_name, reset_status
 from slack import send_modal, send_message, notify_admin_of_done
+from tasks import daily_check
 from datetime import datetime
 
 app = Flask(__name__)
@@ -52,10 +53,11 @@ def slack_interact():
 def handle_command_async(command, text, sender_id):
     args = text.split()
     if not args:
-        send_message(sender_id, "❗ Bitte gib einen Befehl ein: add/remove/list")
+        send_message(sender_id, "❗ Bitte gib einen Befehl ein: add/remove/list/reset/run")
         return
 
-    if args[0] == 'add':
+    cmd = args[0]
+    if cmd == 'add':
         if len(args) < 2:
             send_message(sender_id, "❗ Bitte gib einen Benutzer an: /reminder add @username")
             return
@@ -81,7 +83,7 @@ def handle_command_async(command, text, sender_id):
         except Exception as e:
             send_message(sender_id, f"❌ Fehler beim Hinzufügen: {str(e)}")
 
-    elif args[0] == 'remove':
+    elif cmd == 'remove':
         if len(args) < 2:
             send_message(sender_id, "❗ Bitte gib einen Benutzer an: /reminder remove @username")
             return
@@ -100,11 +102,21 @@ def handle_command_async(command, text, sender_id):
         else:
             send_message(sender_id, f"⚠️ User nicht gefunden.")
 
-    elif args[0] == 'list':
+    elif cmd == 'list':
         users = load_users()
         if not users:
             send_message(sender_id, "🔍 Keine Nutzer gefunden.")
         else:
             lines = [f"• {u['name']} ({u['id']})" for u in users]
-            send_message(sender_id, "👥 *Aktive Reminder-User:*
-" + "\n".join(lines))
+            send_message(sender_id, "👥 *Aktive Reminder-User:*\n" + "\n".join(lines))
+
+    elif cmd == 'reset':
+        reset_status()
+        send_message(sender_id, "🧹 Status aller Nutzer zurückgesetzt.")
+
+    elif cmd == 'run':
+        daily_check()
+        send_message(sender_id, "✅ Reminder-Logik manuell ausgeführt.")
+
+if __name__ == "__main__":
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
