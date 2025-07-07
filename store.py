@@ -25,7 +25,7 @@ def is_done(user_id):
     user_id = user_id.replace("@", "")
     with open(STATUS_FILE) as f:
         data = json.load(f)
-    return data.get(user_id) is True
+    return str(data.get(user_id)) == "True"
 
 def mark_done(user_id):
     user_id = user_id.replace("@", "")
