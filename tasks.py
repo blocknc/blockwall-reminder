@@ -20,8 +20,18 @@ def daily_check(force=False):
         name = u['name']
 
         if today in [1, 2, 3] or force:
-            if not is_done(uid):
-                send_message(uid, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", blocks=[{
+            if is_done(uid):
+                continue  # skip sending if already done
+            send_message(uid, text="Reminder", blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "📌 *Monthly Receipt Reminder*
+Please upload your receipts and click below when done."
+                    }
+                },
+                {
                     "type": "actions",
                     "elements": [
                         {
@@ -30,7 +40,8 @@ def daily_check(force=False):
                             "action_id": "open_reminder_modal"
                         }
                     ]
-                }])
+                }
+            ])
 
         elif today == 4:
             if not is_done(uid):
@@ -46,4 +57,3 @@ def daily_check(force=False):
 def start_scheduler():
     scheduler.add_job(daily_check, 'cron', hour=9, timezone=timezone('Europe/Berlin'))
     scheduler.start()
-    print("✅ Scheduler started (daily at 09:00 CET/MESZ)")
