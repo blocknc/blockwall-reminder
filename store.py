@@ -1,9 +1,12 @@
 # store.py
 import json
 import os
+from slack_sdk import WebClient
 
 USER_FILE = "users.json"
 STATUS_FILE = "status.json"
+
+client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 
 if not os.path.exists(USER_FILE):
     with open(USER_FILE, "w") as f:
@@ -36,6 +39,14 @@ def load_users():
     with open(USER_FILE) as f:
         raw = json.load(f)
     return [uid.replace("@", "") for uid in raw]
+
+def get_display_name(user_id):
+    try:
+        user_info = client.users_info(user=user_id)
+        profile = user_info.get("user", {}).get("profile", {})
+        return profile.get("display_name") or profile.get("real_name") or user_id
+    except:
+        return user_id
 
 def save_users(users):
     cleaned = list({u.replace("@", "") for u in users})
