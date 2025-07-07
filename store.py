@@ -22,11 +22,13 @@ def save_users(users):
         json.dump(users, f)
 
 def is_done(user_id):
+    user_id = user_id.replace("@", "")
     with open(STATUS_FILE) as f:
         data = json.load(f)
     return data.get(user_id) is True
 
 def mark_done(user_id):
+    user_id = user_id.replace("@", "")
     with open(STATUS_FILE) as f:
         data = json.load(f)
     data[user_id] = True
@@ -35,6 +37,6 @@ def mark_done(user_id):
 
 def reset_status():
     users = load_users()
-    new_status = {uid: False for uid in users}
+    new_status = {uid.replace("@", ""): False for uid in users}
     with open(STATUS_FILE, "w") as f:
         json.dump(new_status, f)
