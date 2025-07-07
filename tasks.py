@@ -1,8 +1,8 @@
 # tasks.py
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
-from store import load_users, is_done, save_users, mark_done, reset_status
-from slack import send_message, send_modal
+from store import load_users, is_done, reset_status
+from slack import send_message
 from slack_sdk import WebClient
 import os
 
@@ -31,8 +31,7 @@ def daily_check():
             continue
 
         if today in [1, 2, 3]:
-            send_message(user_id, "📌 *Monthly Receipt Reminder*
-Please upload your receipts and click below when done.", blocks=[
+            send_message(user_id, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", blocks=[
                 {
                     "type": "actions",
                     "elements": [
@@ -63,9 +62,7 @@ Please upload your receipts and click below when done.", blocks=[
             log.append(f"⚠️ Final notice sent to <@{user_id}>")
 
     if log and ADMIN_USER_ID:
-        report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*
-" + "
-".join(log)
+        report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*\n" + "\n".join(log)
         send_message(ADMIN_USER_ID, report)
 
 def start_scheduler():
