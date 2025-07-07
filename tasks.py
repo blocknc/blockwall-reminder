@@ -30,8 +30,9 @@ def daily_check():
         if is_done(user_id):
             continue
 
-        if today == 1:
-            send_message(user_id, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", blocks=[
+        if today in [1, 2, 3]:
+            send_message(user_id, "📌 *Monthly Receipt Reminder*
+Please upload your receipts and click below when done.", blocks=[
                 {
                     "type": "actions",
                     "elements": [
@@ -44,16 +45,27 @@ def daily_check():
                     ]
                 }
             ])
-            log.append(f"🔔 Reminder sent to <@{user_id}>")
-        elif today in [2, 3]:
-            send_message(user_id, "📌 Reminder: Don't forget to upload your receipts. Click Done in the reminder modal!")
-            log.append(f"🔁 Follow-up sent to <@{user_id}>")
+            log.append(f"🔁 Reminder sent to <@{user_id}> (Day {today})")
         elif today == 4:
-            send_message(user_id, "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!")
+            send_message(user_id, "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!", blocks=[
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Mark as Done"},
+                            "action_id": "open_reminder_modal",
+                            "value": user_id
+                        }
+                    ]
+                }
+            ])
             log.append(f"⚠️ Final notice sent to <@{user_id}>")
 
     if log and ADMIN_USER_ID:
-        report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*\n" + "\n".join(log)
+        report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*
+" + "
+".join(log)
         send_message(ADMIN_USER_ID, report)
 
 def start_scheduler():
