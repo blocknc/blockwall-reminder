@@ -1,7 +1,7 @@
 # slack.py
 import os
 from slack_sdk import WebClient
-from store import is_done, get_comment, load_users, mark_done, save_message_ts, get_message_ts
+from store import is_done, get_comment, load_users, mark_done, save_message_ts, get_message_ts, clear_message_ts
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
