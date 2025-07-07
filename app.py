@@ -40,8 +40,6 @@ def handle_command_async(command, text, sender_id):
                 users.append({"id": slack_id, "name": display_name})
             save_users(users)
             send_message(sender_id, f"✅ User {display_name} {'updated' if found else 'added'}.")
-            else:
-                send_message(sender_id, f"⚠️ User {display_name} is already in the list.")
         except:
             send_message(sender_id, f"❌ Failed to add user: {args[1]}")
 
@@ -57,8 +55,8 @@ def handle_command_async(command, text, sender_id):
 
     elif args[0] == 'list':
         users = load_users()
-user_list = '\n'.join([f"• {u['name']} ({u['id']})" for u in users])
-
+        user_list = '
+'.join([f"• {u['name']} ({u['id']})" for u in users])
         send_message(sender_id, f"👥 Reminder list: {user_list}")
 
     elif args[0] == 'run':
