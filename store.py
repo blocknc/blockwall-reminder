@@ -56,3 +56,18 @@ def get_display_name(user_id):
         if u["id"] == user_id:
             return u.get("name")
     return user_id
+
+def save_message_ts(user_id, ts):
+    users = load_users()
+    for u in users:
+        if u["id"] == user_id:
+            u["ts"] = ts
+            break
+    save_users(users)
+
+def get_message_ts(user_id):
+    users = load_users()
+    for u in users:
+        if u["id"] == user_id:
+            return u.get("ts")
+    return None
