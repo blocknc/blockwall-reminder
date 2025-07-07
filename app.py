@@ -54,7 +54,7 @@ def handle_command_async(command, text, sender_id):
                     send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
                     return
                 slack_id = match["id"]
-                display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_argmatch["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
+                display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_arg["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
             users = load_users()
             found = False
             for u in users:
