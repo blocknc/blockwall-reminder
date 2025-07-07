@@ -39,12 +39,17 @@ def handle_command_async(command, text, user_id):
         for uid in users:
             if is_done(uid):
                 continue
-            send_message(uid, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", [
+            send_message(uid, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", blocks=[
                 {
-                    "type": "button",
-                    "text": {"type": "plain_text", "text": "Mark as Done"},
-                    "action_id": "open_reminder_modal",
-                    "value": uid
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Mark as Done"},
+                            "action_id": "open_reminder_modal",
+                            "value": uid
+                        }
+                    ]
                 }
             ])
         send_message(user_id, "Manual reminder check triggered.")
@@ -118,8 +123,6 @@ def slack_interact():
             else:
                 trigger_id = payload["trigger_id"]
                 send_modal(trigger_id)
-        else:
-            handle_admin_interaction(payload)
         return make_response("", 200)
 
     return make_response("", 200)
