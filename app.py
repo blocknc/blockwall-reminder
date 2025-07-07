@@ -53,7 +53,7 @@ def slack_interact():
 def handle_command_async(command, text, sender_id):
     args = text.split()
     if not args:
-        send_message(sender_id, "❗ Bitte gib einen Befehl ein: add/remove/list/reset/run")
+        send_message(sender_id, "❗ Bitte gib einen Befehl ein: add/remove/list/reset/run/status")
         return
 
     cmd = args[0]
@@ -110,12 +110,23 @@ def handle_command_async(command, text, sender_id):
             lines = [f"• {u['name']} ({u['id']})" for u in users]
             send_message(sender_id, "👥 *Aktive Reminder-User:*\n" + "\n".join(lines))
 
+    elif cmd == 'status':
+        users = load_users()
+        if not users:
+            send_message(sender_id, "📭 Keine Nutzer eingetragen.")
+        else:
+            lines = []
+            for u in users:
+                status = "✅ Done" if is_done(u['id']) else "🔴 Pending"
+                lines.append(f"• {u['name']} ({u['id']}) – {status}")
+            send_message(sender_id, "📊 *Status aller Nutzer:*\n" + "\n".join(lines))
+
     elif cmd == 'reset':
         reset_status()
         send_message(sender_id, "🧹 Status aller Nutzer zurückgesetzt.")
 
     elif cmd == 'run':
-        daily_check()
+        daily_check(force=True)
         send_message(sender_id, "✅ Reminder-Logik manuell ausgeführt.")
 
 if __name__ == "__main__":
