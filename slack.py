@@ -1,7 +1,7 @@
 # slack.py
 import os
 from slack_sdk import WebClient
-from store import is_done, get_comment
+from store import is_done, get_comment, load_users
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
@@ -70,3 +70,16 @@ def notify_admin_of_done(user_id, comment=None):
         message += f"\n📝 Comment: {saved_comment}"
     send_message(ADMIN_USER_ID, message)
     send_message(user_id, "✅ Thank you! Your receipt status has been marked as *Done*.")
+
+def generate_status_overview():
+    users = load_users()
+    lines = []
+    for u in users:
+        uid = u['id']
+        status = "✅ Done" if is_done(uid) else "🔴 Pending"
+        comment = get_comment(uid)
+        line = f"• {u['name']} ({uid}) – {status}"
+        if comment:
+            line += f"\n   📝 {comment}"
+        lines.append(line)
+    return "📊 *Status Overview:*\n" + "\n".join(lines)
