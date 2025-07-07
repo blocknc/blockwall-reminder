@@ -8,7 +8,7 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
 REMINDER_MODAL = {
     "type": "modal",
-    "title": {"type": "plain_text", "text": "Upload Reminder"},
+    "title": {"type": "plain_text", "text": "Receipt Reminder"},
     "close": {"type": "plain_text", "text": "Close"},
     "submit": {"type": "plain_text", "text": "Done"},
     "callback_id": "upload_done_modal",
@@ -18,7 +18,7 @@ REMINDER_MODAL = {
             "text": {
                 "type": "mrkdwn",
                 "text": (
-                    "📥 *Receipt Reminder*\nPlease upload your receipts for last month.\nClick *Done* once you've completed the upload."
+                    "📥 *Urgent*\nPlease upload your receipts for last month.\nClick *Done* once you've completed the upload."
                 )
             }
         },
@@ -28,7 +28,7 @@ REMINDER_MODAL = {
             "optional": True,
             "label": {
                 "type": "plain_text",
-                "text": "Optional comment (e.g. missing receipts)"
+                "text": "Comment (e.g. missing receipts)"
             },
             "element": {
                 "type": "plain_text_input",
@@ -82,10 +82,8 @@ def generate_status_overview():
         if comment:
             line += f"\n   📝 {comment}"
         lines.append(line)
-    return "📊 *Status Overview:*
-" + "\n".join(lines)
+    return "📊 *Status Overview:*\n" + "\n".join(lines)
 
-# exposed command function to use in app.py
 def handle_status_command(user_id):
     overview = generate_status_overview()
     send_message(user_id, overview)
