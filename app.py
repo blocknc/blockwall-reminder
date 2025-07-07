@@ -12,6 +12,7 @@ from tasks import handle_admin_interaction
 app = Flask(__name__)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 signature_verifier = SignatureVerifier(os.environ['SLACK_SIGNING_SECRET'])
+ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
 def handle_command_async(command, text, user_id):
     args = text.split()
@@ -36,6 +37,8 @@ def handle_command_async(command, text, user_id):
     elif args[0] == 'run':
         users = load_users()
         for uid in users:
+            if is_done(uid):
+                continue
             send_message(uid, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", [
                 {
                     "type": "button",
@@ -45,6 +48,14 @@ def handle_command_async(command, text, user_id):
                 }
             ])
         send_message(user_id, "Manual reminder check triggered.")
+    elif args[0] == 'status':
+        users = load_users()
+        pending = [f"<@{u}>" for u in users if not is_done(u)]
+        done = [f"<@{u}>" for u in users if is_done(u)]
+        message = "📋 *Monthly Receipt Status Summary*\n"
+        message += f"\n✅ Done: {', '.join(done) if done else 'None'}"
+        message += f"\n🕓 Pending: {', '.join(pending) if pending else 'None'}"
+        send_message(ADMIN_USER_ID, message)
 
 @app.route('/slack/commands', methods=['POST'])
 def slack_commands():
@@ -92,13 +103,17 @@ def slack_interact():
             comment = None
         mark_done(user_id)
         notify_admin_of_done(user_id, comment)
+        send_message(user_id, "✅ Thank you! Your receipt status has been marked as done.")
         return make_response("", 200)
 
     elif payload["type"] == "block_actions":
         action = payload['actions'][0]
         if action['action_id'] == "open_reminder_modal":
-            trigger_id = payload["trigger_id"]
-            send_modal(trigger_id)
+            if is_done(user_id):
+                send_message(user_id, "✅ You’ve already marked your receipts as done this month.")
+            else:
+                trigger_id = payload["trigger_id"]
+                send_modal(trigger_id)
         else:
             handle_admin_interaction(payload)
         return make_response("", 200)
