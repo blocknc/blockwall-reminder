@@ -1,17 +1,53 @@
-# app.py (for Render web service only – no scheduler)
+# app.py
 from flask import Flask, request, make_response
 from slack_sdk import WebClient
 from slack_sdk.signature import SignatureVerifier
 import os
 import json
+import threading
 from store import load_users, save_users, mark_done, is_done
 from slack import send_modal, send_message
 from tasks import handle_admin_interaction
-from tasks import start_scheduler
 
 app = Flask(__name__)
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 signature_verifier = SignatureVerifier(os.environ['SLACK_SIGNING_SECRET'])
+
+def handle_command_async(command, text, user_id):
+    args = text.split()
+    if args[0] == 'add':
+        user = args[1].replace('<@', '').replace('>', '')
+        users = load_users()
+        if user not in users:
+            users.append(user)
+            save_users(users)
+            send_message(user_id, f"User <@{user}> added.")
+    elif args[0] == 'remove':
+        user = args[1].replace('<@', '').replace('>', '')
+        users = load_users()
+        if user in users:
+            users.remove(user)
+            save_users(users)
+            send_message(user_id, f"User <@{user}> removed.")
+    elif args[0] == 'list':
+        users = load_users()
+        user_list = ', '.join([f"<@{u}>" for u in users])
+        send_message(user_id, f"Reminder list: {user_list}")
+
+@app.route('/slack/commands', methods=['POST'])
+def slack_commands():
+    if not signature_verifier.is_valid_request(request.get_data(), request.headers):
+        return make_response("invalid request", 403)
+
+    data = request.form
+    command = data.get('command')
+    user_id = data.get('user_id')
+    text = data.get('text')
+
+    thread = threading.Thread(target=handle_command_async, args=(command, text, user_id))
+    thread.start()
+
+    return make_response("", 200)
 
 @app.route('/slack/events', methods=['POST'])
 def slack_events():
@@ -25,39 +61,6 @@ def slack_events():
             return make_response(payload["challenge"], 200)
         if payload["type"] == "event_callback":
             return make_response("", 200)
-
-    return make_response("", 200)
-
-@app.route('/slack/commands', methods=['POST'])
-def slack_commands():
-    if not signature_verifier.is_valid_request(request.get_data(), request.headers):
-        return make_response("invalid request", 403)
-
-    data = request.form
-    command = data.get('command')
-    user_id = data.get('user_id')
-    text = data.get('text')
-
-    if command == '/reminder':
-        args = text.split()
-        if args[0] == 'add':
-            user = args[1].replace('<@', '').replace('>', '')
-            users = load_users()
-            if user not in users:
-                users.append(user)
-                save_users(users)
-                send_message(user_id, f"User <@{user}> added.")
-        elif args[0] == 'remove':
-            user = args[1].replace('<@', '').replace('>', '')
-            users = load_users()
-            if user in users:
-                users.remove(user)
-                save_users(users)
-                send_message(user_id, f"User <@{user}> removed.")
-        elif args[0] == 'list':
-            users = load_users()
-            user_list = ', '.join([f"<@{u}>" for u in users])
-            send_message(user_id, f"Reminder list: {user_list}")
 
     return make_response("", 200)
 
@@ -80,5 +83,4 @@ def slack_interact():
     return make_response("", 200)
 
 if __name__ == '__main__':
-    start_scheduler()
     app.run(port=3000)
