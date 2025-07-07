@@ -82,4 +82,10 @@ def generate_status_overview():
         if comment:
             line += f"\n   📝 {comment}"
         lines.append(line)
-    return "📊 *Status Overview:*\n" + "\n".join(lines)
+    return "📊 *Status Overview:*
+" + "\n".join(lines)
+
+# exposed command function to use in app.py
+def handle_status_command(user_id):
+    overview = generate_status_overview()
+    send_message(user_id, overview)
