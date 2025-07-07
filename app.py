@@ -102,11 +102,12 @@ def slack_interact():
     if payload["type"] == "view_submission":
         comment = None
         try:
-            comment = payload["view"]["state"]["values"]["upload_comment"]["comment_input"]["value"]
+            comment = payload["view"]["state"]["values"].get("upload_comment", {}).get("comment_input", {}).get("value")
         except:
             comment = None
-        mark_done(user_id)
+
         notify_admin_of_done(user_id, comment)
+        mark_done(user_id)
         send_message(user_id, "✅ Thank you! Your receipt status has been marked as done.")
         return make_response("", 200)
 
