@@ -50,6 +50,12 @@ def reset_status():
     with open(STATUS_FILE, "w") as f:
         json.dump({}, f)
 
+    users = load_users()
+    for u in users:
+        if "ts" in u:
+            del u["ts"]
+    save_users(users)
+
 def get_display_name(user_id):
     users = load_users()
     for u in users:
@@ -71,3 +77,10 @@ def get_message_ts(user_id):
         if u["id"] == user_id:
             return u.get("ts")
     return None
+
+def clear_message_ts(user_id):
+    users = load_users()
+    for u in users:
+        if u["id"] == user_id and "ts" in u:
+            del u["ts"]
+    save_users(users)
