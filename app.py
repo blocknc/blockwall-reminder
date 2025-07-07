@@ -11,6 +11,21 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+# Slack command endpoint
+@app.route("/slack/command", methods=["POST"])
+def slack_command():
+    if not signature_verifier.is_valid_request(request.get_data(), request.headers):
+        return make_response("invalid request signature", 403)
+
+    data = request.form
+    command = data.get("command")
+    text = data.get("text")
+    user_id = data.get("user_id")
+
+    threading.Thread(target=handle_command_async, args=(command, text, user_id)).start()
+    return make_response("", 200)
+
+
 # Optional startup validation for JSON files
 try:
     users = load_users()
@@ -74,5 +89,5 @@ def handle_command_async(command, text, sender_id):
 
     elif args[0] == 'list':
         users = load_users()
-        user_list = '\n'.join([f"• {u['name']} ({u['id']})" for u in users])
-
+        user_list = '
+'.join([f"• {u['name']} ({u['id']})" for u in users])
