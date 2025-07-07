@@ -37,9 +37,10 @@ def handle_command_async(command, text, user_id):
     elif args[0] == 'run':
         users = load_users()
         for uid in users:
-            if is_done(uid):
+            slack_id = uid.replace('@', '')
+            if is_done(slack_id):
                 continue
-            send_message(uid, "📌 Monthly Receipt Reminder", blocks=[
+            send_message(slack_id, "📌 Monthly Receipt Reminder", blocks=[
                 {
                     "type": "section",
                     "text": {"type": "mrkdwn", "text": "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."}
@@ -51,7 +52,7 @@ def handle_command_async(command, text, user_id):
                             "type": "button",
                             "text": {"type": "plain_text", "text": "Mark as Done"},
                             "action_id": "open_reminder_modal",
-                            "value": uid
+                            "value": slack_id
                         }
                     ]
                 }
