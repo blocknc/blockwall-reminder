@@ -16,6 +16,7 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")  # must be set in .env
 
 def daily_check():
     today = datetime.today().day
+    log = []
 
     if today == 10:
         reset_status()
@@ -39,10 +40,17 @@ def daily_check():
                     "value": user_id
                 }
             ])
+            log.append(f"🔔 Reminder sent to <@{user_id}>")
         elif today in [2, 3]:
             send_message(user_id, "📌 Reminder: Don't forget to upload your receipts. Click Done in the reminder modal!")
+            log.append(f"🔁 Follow-up sent to <@{user_id}>")
         elif today == 4:
             send_message(user_id, "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!")
+            log.append(f"⚠️ Final notice sent to <@{user_id}>")
+
+    if log:
+        report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*\n" + "\n".join(log)
+        send_message(ADMIN_USER_ID, report)
 
 def start_scheduler():
     scheduler.add_job(daily_check, 'cron', hour=9)
