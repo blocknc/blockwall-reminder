@@ -6,7 +6,7 @@ import os
 import json
 import threading
 from store import load_users, save_users, mark_done, is_done, get_display_name, reset_status
-from slack import send_modal, send_message, notify_admin_of_done
+from slack import send_modal, send_message, notify_admin_of_done, handle_status_command
 from tasks import daily_check
 from datetime import datetime
 
@@ -39,7 +39,7 @@ def slack_interact():
     if payload["type"] == "view_submission" and payload["view"]["callback_id"] == "upload_done_modal":
         user_id = payload["user"]["id"]
         comment = payload["view"]["state"].get("upload_comment", {}).get("comment_input", {}).get("value", "")
-        mark_done(user_id)
+        mark_done(user_id, comment)
         notify_admin_of_done(user_id, comment)
         return make_response("", 200)
 
@@ -113,15 +113,7 @@ def handle_command_async(command, text, sender_id):
             send_message(sender_id, "👥 *Aktive Reminder-User:*\n" + "\n".join(lines))
 
     elif cmd == 'status':
-        users = load_users()
-        if not users:
-            send_message(sender_id, "📭 Keine Nutzer eingetragen.")
-        else:
-            lines = []
-            for u in users:
-                status = "✅ Done" if is_done(u['id']) else "🔴 Pending"
-                lines.append(f"• {u['name']} ({u['id']}) – {status}")
-            send_message(sender_id, "📊 *Status aller Nutzer:*\n" + "\n".join(lines))
+        handle_status_command(sender_id)
 
     elif cmd == 'reset':
         reset_status()
