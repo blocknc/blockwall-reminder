@@ -61,8 +61,7 @@ def daily_check(force=False):
 def send_summary_to_admin():
     users = load_users()
     summary = [f"• {u['name']} – {'✅ Done' if is_done(u['id']) else '❌ Pending'}" for u in users]
-    message = "📊 *Monthly Upload Status Summary:*
-" + "\n".join(summary)
+    message = "📊 *Monthly Upload Status Summary:*\n" + "\n".join(summary)
     send_message(ADMIN_USER_ID, message)
 
 def start_scheduler():
