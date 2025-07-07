@@ -48,10 +48,13 @@ def send_modal(trigger_id):
     client.views_open(trigger_id=trigger_id, view=REMINDER_MODAL)
 
 def send_message(user_id, text, blocks=None):
-    if blocks:
-        client.chat_postMessage(channel=user_id, text=text, blocks=blocks)
-    else:
-        client.chat_postMessage(channel=user_id, text=text)
+    try:
+        if blocks:
+            client.chat_postMessage(channel=user_id, text=text, blocks=blocks)
+        else:
+            client.chat_postMessage(channel=user_id, text=text)
+    except Exception as e:
+        print(f"❌ Failed to send message to {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
     if not is_done(user_id):
@@ -64,4 +67,4 @@ def notify_admin_of_done(user_id, comment=None):
         message = f"✅ {display_name} has marked their receipts as done."
         if comment:
             message += f"\n📎 Comment: {comment}"
-        client.chat_postMessage(channel=ADMIN_USER_ID, text=message)
+        send_message(ADMIN_USER_ID, message)
