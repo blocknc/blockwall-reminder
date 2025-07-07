@@ -1,7 +1,7 @@
 # slack.py
 import os
 from slack_sdk import WebClient
-from store import is_done, get_comment, load_users, mark_done
+from store import is_done, get_comment, load_users, mark_done, save_message_ts, get_message_ts
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
@@ -54,6 +54,57 @@ def send_message(user_id, text, blocks=None):
             client.chat_postMessage(channel=user_id, text=text)
     except Exception as e:
         print(f"❌ Failed to send message to {user_id}: {e}")
+
+def send_reminder(user_id):
+    try:
+        result = client.chat_postMessage(
+            channel=user_id,
+            text="Reminder",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Mark as Done"},
+                            "action_id": "open_reminder_modal"
+                        }
+                    ]
+                }
+            ]
+        )
+        save_message_ts(user_id, result["ts"])
+    except Exception as e:
+        print(f"❌ Failed to send reminder to {user_id}: {e}")
+
+def update_reminder(user_id):
+    ts = get_message_ts(user_id)
+    if not ts:
+        return
+    try:
+        client.chat_update(
+            channel=user_id,
+            ts=ts,
+            text="✅ Already done",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "✅ *Thanks!* Your receipt upload has been marked as Done."
+                    }
+                }
+            ]
+        )
+    except Exception as e:
+        print(f"❌ Failed to update message for {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
     mark_done(user_id, comment)
