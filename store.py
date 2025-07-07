@@ -37,8 +37,7 @@ with open(STATUS_FILE, "w") as f:
 
 def load_users():
     with open(USER_FILE) as f:
-        raw = json.load(f)
-    return [uid.replace("@", "") for uid in raw]
+        return json.load(f)
 
 def get_display_name(user_id):
     try:
@@ -49,7 +48,13 @@ def get_display_name(user_id):
         return user_id
 
 def save_users(users):
-    cleaned = list({u.replace("@", "") for u in users})
+    cleaned = []
+    seen = set()
+    for u in users:
+        uid = u["id"].replace("@", "")
+        if uid not in seen:
+            cleaned.append({"id": uid, "name": u["name"]})
+            seen.add(uid)
     with open(USER_FILE, "w") as f:
         json.dump(cleaned, f)
 
@@ -57,7 +62,7 @@ def is_done(user_id):
     user_id = user_id.replace("@", "")
     with open(STATUS_FILE) as f:
         data = json.load(f)
-    return data.get(user_id) is True
+    return data.get(user_id, False)
 
 def mark_done(user_id):
     user_id = user_id.replace("@", "")
@@ -69,6 +74,6 @@ def mark_done(user_id):
 
 def reset_status():
     users = load_users()
-    new_status = {uid.replace("@", ""): False for uid in users}
+    new_status = {u["id"].replace("@", ""): False for u in users}
     with open(STATUS_FILE, "w") as f:
         json.dump(new_status, f)
