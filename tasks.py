@@ -27,8 +27,7 @@ def daily_check(force=False):
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "📌 *Monthly Receipt Reminder*
-Please upload your receipts and click below when done."
+                        "text": "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
                     }
                 },
                 {
