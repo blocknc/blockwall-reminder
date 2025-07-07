@@ -1,5 +1,5 @@
 # slack.py
-import os
+import o
 from slack_sdk import WebClient
 from store import is_done, get_comment
 
