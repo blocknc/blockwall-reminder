@@ -26,6 +26,7 @@ REMINDER_MODAL = {
         {
             "type": "input",
             "block_id": "upload_comment",
+            "optional": True,
             "label": {
                 "type": "plain_text",
                 "text": "Optional comment (e.g., what is missing and why)"
@@ -34,7 +35,6 @@ REMINDER_MODAL = {
                 "type": "plain_text_input",
                 "action_id": "comment_input",
                 "multiline": True,
-                "optional": True,
                 "placeholder": {
                     "type": "plain_text",
                     "text": "e.g., Expenses for travel, hotel, invoices..."
@@ -52,7 +52,6 @@ def send_message(user_id, text, blocks=None):
         client.chat_postMessage(channel=user_id, text=text, blocks=blocks)
     else:
         client.chat_postMessage(channel=user_id, text=text)
-
 
 def notify_admin_of_done(user_id, comment=None):
     if not is_done(user_id):
