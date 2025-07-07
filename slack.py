@@ -55,7 +55,13 @@ def send_message(user_id, text, blocks=None):
 
 def notify_admin_of_done(user_id, comment=None):
     if not is_done(user_id):
-        message = f"✅ <@{user_id}> has marked their receipts as done."
+        try:
+            profile = client.users_info(user=user_id)
+            display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
+        except:
+            display_name = user_id
+
+        message = f"✅ {display_name} has marked their receipts as done."
         if comment:
             message += f"\n📎 Comment: {comment}"
         client.chat_postMessage(channel=ADMIN_USER_ID, text=message)
