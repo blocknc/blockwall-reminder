@@ -1,8 +1,10 @@
 # slack.py
 import os
 from slack_sdk import WebClient
+from store import is_done
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
+ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
 REMINDER_MODAL = {
     "type": "modal",
@@ -19,6 +21,23 @@ REMINDER_MODAL = {
                     "Hi there! 👋\n\nPlease remember to upload all your receipts for last month."
                     "\nClick *Done* after you've uploaded them."
                 )
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "upload_comment",
+            "label": {
+                "type": "plain_text",
+                "text": "Optional comment (e.g., what is missing and why)"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "comment_input",
+                "multiline": True,
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "e.g., Expenses for travel, hotel, invoices..."
+                }
             }
         }
     ]
@@ -41,3 +60,10 @@ def send_message(user_id, text, blocks=None):
         ])
     else:
         client.chat_postMessage(channel=user_id, text=text)
+
+def notify_admin_of_done(user_id, comment=None):
+    if not is_done(user_id):
+        message = f"✅ <@{user_id}> has marked their receipts as done."
+        if comment:
+            message += f"\n📎 Comment: {comment}"
+        client.chat_postMessage(channel=ADMIN_USER_ID, text=message)
