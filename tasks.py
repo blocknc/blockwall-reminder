@@ -12,18 +12,19 @@ scheduler = BackgroundScheduler()
 
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
-def daily_check():
+def daily_check(force=False):
     today = datetime.today().day
     log = []
 
-    if today == 10:
-        reset_status()
-        if ADMIN_USER_ID:
-            send_message(ADMIN_USER_ID, "🔄 Monthly receipt statuses have been reset.")
-        return
+    if not force:
+        if today == 10:
+            reset_status()
+            if ADMIN_USER_ID:
+                send_message(ADMIN_USER_ID, "🔄 Monthly receipt statuses have been reset.")
+            return
 
-    if today > 4:
-        return
+        if today > 4:
+            return
 
     users = load_users()
     for user in users:
@@ -32,7 +33,7 @@ def daily_check():
             continue
 
         message = "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
-        if today == 4:
+        if not force and today == 4:
             message = "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!"
 
         send_message(user_id, message, blocks=[
@@ -49,7 +50,7 @@ def daily_check():
             }
         ])
 
-        log_entry = f"{'⚠️ Final notice' if today == 4 else '🔁 Reminder'} sent to <@{user_id}>"
+        log_entry = f"{'⚠️ Final notice' if not force and today == 4 else '🔁 Reminder'} sent to <@{user_id}>"
         log.append(log_entry)
 
     if log and ADMIN_USER_ID:
