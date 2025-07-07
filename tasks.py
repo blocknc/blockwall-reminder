@@ -73,4 +73,6 @@ def daily_check(force=False):
 
 def start_scheduler():
     scheduler.add_job(daily_check, 'cron', hour=9, timezone=timezone('Europe/Berlin'))
+    scheduler.add_job(reset_status, 'cron', day=10, hour=9, timezone=timezone('Europe/Berlin'))
     scheduler.start()
+
