@@ -115,8 +115,13 @@ def slack_interact():
             comment = None
 
         mark_done(user_id)
-        notify_admin_of_done(user_id, comment)
         send_message(user_id, "✅ Thank you! Your receipt status has been marked as done.")
+        if ADMIN_USER_ID:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+            msg = f"✅ <@{user_id}> has marked their receipts as done at {timestamp}."
+            if comment:
+                msg += f"\n📝 Comment: {comment}"
+            send_message(ADMIN_USER_ID, msg)
         return make_response("", 200)
 
     elif payload["type"] == "block_actions":
