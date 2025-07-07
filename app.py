@@ -89,5 +89,4 @@ def handle_command_async(command, text, sender_id):
 
     elif args[0] == 'list':
         users = load_users()
-        user_list = '
-'.join([f"• {u['name']} ({u['id']})" for u in users])
+        user_list = '\n'.join([f"• {u['name']} ({u['id']})" for u in users])
