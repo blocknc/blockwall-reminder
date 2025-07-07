@@ -30,12 +30,16 @@ def handle_command_async(command, text, sender_id):
                     return
                 slack_id = match["id"]
             display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
-            display_name = slack_user["user"]["profile"].get("display_name") or slack_user["user"]["real_name"]
             users = load_users()
-            if slack_id not in [u["id"] for u in users]:
+            found = False
+            for u in users:
+                if u["id"] == slack_id:
+                    u["name"] = display_name
+                    found = True
+            if not found:
                 users.append({"id": slack_id, "name": display_name})
-                save_users(users)
-                send_message(sender_id, f"✅ User {display_name} added.")
+            save_users(users)
+            send_message(sender_id, f"✅ User {display_name} {'updated' if found else 'added'}.")
             else:
                 send_message(sender_id, f"⚠️ User {display_name} is already in the list.")
         except:
@@ -53,7 +57,8 @@ def handle_command_async(command, text, sender_id):
 
     elif args[0] == 'list':
         users = load_users()
-        user_list = ', '.join([u["name"] for u in users])
+        user_list = '
+'.join([f"• {u['name']} ({u['id']})" for u in users])
         send_message(sender_id, f"👥 Reminder list: {user_list}")
 
     elif args[0] == 'run':
