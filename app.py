@@ -59,11 +59,11 @@ def handle_command_async(command, text, user_id):
         send_message(user_id, "Manual reminder check triggered.")
     elif args[0] == 'status':
         users = load_users()
-        pending = [f"<@{u}>" for u in users if not is_done(u)]
-        done = [f"<@{u}>" for u in users if is_done(u)]
-        message = "📋 *Monthly Receipt Status Summary*\n"
-        message += f"\n✅ Done: {', '.join(done) if done else 'None'}"
-        message += f"\n🕓 Pending: {', '.join(pending) if pending else 'None'}"
+        status_lines = []
+        for u in users:
+            done = is_done(u)
+            status_lines.append(f"✅ <@{u}>" if done else f"🕓 <@{u}>")
+        message = "📋 *Monthly Receipt Status Summary*\n" + "\n".join(status_lines)
         send_message(ADMIN_USER_ID, message)
     elif args[0] == 'reset':
         reset_status()
@@ -110,8 +110,9 @@ def slack_interact():
     if payload["type"] == "view_submission":
         state_values = payload["view"]["state"]["values"]
         comment = None
-        if "upload_comment" in state_values and "comment_input" in state_values["upload_comment"]:
-            comment = state_values["upload_comment"]["comment_input"].get("value")
+        for block in state_values.values():
+            for action in block.values():
+                comment = action.get("value", None)
 
         mark_done(user_id)
         send_message(user_id, "✅ Thank you! Your receipt status has been marked as done.")
