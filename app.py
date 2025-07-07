@@ -39,7 +39,11 @@ def handle_command_async(command, text, user_id):
         for uid in users:
             if is_done(uid):
                 continue
-            send_message(uid, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", blocks=[
+            send_message(uid, "📌 Monthly Receipt Reminder", blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."}
+                },
                 {
                     "type": "actions",
                     "elements": [
