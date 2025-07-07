@@ -38,7 +38,7 @@ def slack_interact():
 
     if payload["type"] == "view_submission" and payload["view"]["callback_id"] == "upload_done_modal":
         user_id = payload["user"]["id"]
-        comment = payload["view"]["state"]["upload_comment"]["comment_input"].get("value")
+        comment = payload["view"]["state"].get("upload_comment", {}).get("comment_input", {}).get("value", "")
         mark_done(user_id)
         notify_admin_of_done(user_id, comment)
         return make_response("", 200)
