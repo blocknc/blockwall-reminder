@@ -2,7 +2,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
-from store import load_users, is_done, reset_status
+from store import load_users, is_done, reset_status, get_comment
 from slack import send_message
 from slack_sdk import WebClient
 import os
@@ -31,6 +31,9 @@ def daily_check(force=False):
     for user in users:
         user_id = user['id']
         if is_done(user_id):
+            comment = get_comment(user_id) or "No comment."
+            done_msg = f"✅ You already marked this month as *Done*.\n📝 *Comment:* {comment}"
+            send_message(user_id, done_msg)
             continue
 
         text = "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
@@ -69,7 +72,11 @@ def daily_check(force=False):
 
 def send_summary_to_admin():
     users = load_users()
-    summary = [f"• {u['name']} – {'✅ Done' if is_done(u['id']) else '❌ Pending'}" for u in users]
+    summary = []
+    for u in users:
+        status = is_done(u['id'])
+        comment = get_comment(u['id'])
+        summary.append(f"• {u['name']} – {'✅ Done' if status else '❌ Pending'}" + (f"\n   📝 {comment}" if status and comment else ""))
     message = "📊 *Monthly Upload Status Summary:*\n" + "\n".join(summary)
     send_message(ADMIN_USER_ID, message)
 
