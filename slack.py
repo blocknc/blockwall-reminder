@@ -8,7 +8,7 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
 REMINDER_MODAL = {
     "type": "modal",
-    "title": {"type": "plain_text", "text": "Upload Reminder"},
+    "title": {"type": "plain_text", "text": "Reminder"},
     "close": {"type": "plain_text", "text": "Close"},
     "submit": {"type": "plain_text", "text": "Done"},
     "callback_id": "upload_done_modal",
@@ -18,7 +18,7 @@ REMINDER_MODAL = {
             "text": {
                 "type": "mrkdwn",
                 "text": (
-                    "📥 *Receipt Reminder*\nPlease upload your receipts for last month.\nClick *Done* once you've completed the upload."
+                    "📥 *Request*\nPlease upload your AMEX receipts for last month.\nClick *Done* once you've completed the upload."
                 )
             }
         },
