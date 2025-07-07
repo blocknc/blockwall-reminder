@@ -1,7 +1,7 @@
 # slack.py
 import os
 from slack_sdk import WebClient
-from store import is_done
+from store import is_done, get_comment
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
@@ -18,9 +18,7 @@ REMINDER_MODAL = {
             "text": {
                 "type": "mrkdwn",
                 "text": (
-                    "📥 *Receipt Reminder*\n"
-                    "Please upload your receipts for last month.\n"
-                    "Click *Done* once you've completed the upload."
+                    "📥 *Receipt Reminder*\nPlease upload your receipts for last month.\nClick *Done* once you've completed the upload."
                 )
             }
         },
@@ -67,8 +65,8 @@ def notify_admin_of_done(user_id, comment=None):
         display_name = user_id
 
     message = f"✅ *{display_name}* marked their receipt upload as _Done_."
-    if comment:
-        message += f"\n📝 Comment: {comment}"
-
+    saved_comment = comment or get_comment(user_id)
+    if saved_comment:
+        message += f"\n📝 Comment: {saved_comment}"
     send_message(ADMIN_USER_ID, message)
     send_message(user_id, "✅ Thank you! Your receipt status has been marked as *Done*.")
