@@ -5,13 +5,15 @@ from slack_sdk.signature import SignatureVerifier
 import os
 import json
 import threading
-from store import load_users, save_users, mark_done, is_done, reset_status, get_display_name
-from slack import send_modal, send_message
+from store import load_users, save_users, mark_done, is_done, get_display_name
+from slack import send_modal, send_message, notify_admin_of_done
 from datetime import datetime
 
 app = Flask(__name__)
+client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
+signature_verifier = SignatureVerifier(os.environ['SLACK_SIGNING_SECRET'])
+ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
-# Slack command endpoint
 @app.route("/slack/command", methods=["POST"])
 def slack_command():
     if not signature_verifier.is_valid_request(request.get_data(), request.headers):
@@ -23,44 +25,46 @@ def slack_command():
     user_id = data.get("user_id")
 
     threading.Thread(target=handle_command_async, args=(command, text, user_id)).start()
+    return make_response("Processing...", 200)
+
+@app.route("/slack/interact", methods=["POST"])
+def slack_interact():
+    if not signature_verifier.is_valid_request(request.get_data(), request.headers):
+        return make_response("invalid request", 403)
+
+    payload = json.loads(request.form["payload"])
+
+    if payload["type"] == "view_submission" and payload["view"]["callback_id"] == "upload_done_modal":
+        user_id = payload["user"]["id"]
+        comment = payload["view"]["state"]["upload_comment"]["comment_input"].get("value")
+        mark_done(user_id)
+        notify_admin_of_done(user_id, comment)
+        return make_response("", 200)
+
+    elif payload["type"] == "block_actions":
+        action_id = payload["actions"][0]["action_id"]
+        if action_id == "open_reminder_modal":
+            send_modal(payload["trigger_id"])
+        return make_response("", 200)
+
     return make_response("", 200)
-
-
-# Optional startup validation for JSON files
-try:
-    users = load_users()
-    if not isinstance(users, list):
-        raise ValueError("users.json is not a list")
-    for u in users:
-        if not isinstance(u, dict) or "id" not in u or "name" not in u:
-            raise ValueError("Invalid user entry")
-except Exception as e:
-    print(f"❌ Error loading users.json: {e}")
-    with open("users.json", "w") as f:
-        json.dump([], f)
-
-try:
-    with open("status.json") as f:
-        status_data = json.load(f)
-    if not isinstance(status_data, dict):
-        raise ValueError("status.json is not a dict")
-except Exception as e:
-    print(f"❌ Error loading status.json: {e}")
-    with open("status.json", "w") as f:
-        json.dump({}, f)
-client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
-signature_verifier = SignatureVerifier(os.environ['SLACK_SIGNING_SECRET'])
-ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
 def handle_command_async(command, text, sender_id):
     args = text.split()
+    if not args:
+        send_message(sender_id, "❗ Bitte gib einen Befehl ein: add/remove/list")
+        return
+
     if args[0] == 'add':
+        if len(args) < 2:
+            send_message(sender_id, "❗ Bitte gib einen Benutzer an: /reminder add @username")
+            return
         user_arg = args[1].replace('@', '').replace('<@', '').replace('>', '').replace('!', '')
         try:
             all_users = client.users_list()
-            match = next((u for u in all_users['members'] if u['id'] == user_arg or u['name'] == user_arg or u['profile'].get('display_name') == user_arg or u['profile'].get('real_name') == user_arg), None)
+            match = next((u for u in all_users['members'] if u['name'] == user_arg or u['profile'].get('display_name') == user_arg or u['profile'].get('real_name') == user_arg), None)
             if not match:
-                send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
+                send_message(sender_id, f"❌ Konnte keinen Slack-User finden: {user_arg}")
                 return
             slack_id = match["id"]
             display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
@@ -73,20 +77,34 @@ def handle_command_async(command, text, sender_id):
             if not found:
                 users.append({"id": slack_id, "name": display_name})
             save_users(users)
-            send_message(sender_id, f"✅ User {display_name} {'updated' if found else 'added'}.")
-        except:
-            send_message(sender_id, f"❌ Failed to add user: {args[1]}")
+            send_message(sender_id, f"✅ User {display_name} {'aktualisiert' if found else 'hinzugefügt'}.")
+        except Exception as e:
+            send_message(sender_id, f"❌ Fehler beim Hinzufügen: {str(e)}")
 
     elif args[0] == 'remove':
-        user_tag = args[1].replace('<@', '').replace('>', '').replace('!', '')
+        if len(args) < 2:
+            send_message(sender_id, "❗ Bitte gib einen Benutzer an: /reminder remove @username")
+            return
+        user_tag = args[1].replace('@', '').replace('<@', '').replace('>', '').replace('!', '')
         users = load_users()
-        filtered = [u for u in users if u["id"] != user_tag and u["name"] != user_tag]
+        all_users = client.users_list()
+        match = next((u for u in all_users['members'] if u['name'] == user_tag or u['profile'].get('display_name') == user_tag or u['profile'].get('real_name') == user_tag), None)
+        if not match:
+            send_message(sender_id, f"❌ Konnte keinen Slack-User finden: {user_tag}")
+            return
+        slack_id = match["id"]
+        filtered = [u for u in users if u["id"] != slack_id]
         if len(filtered) < len(users):
             save_users(filtered)
-            send_message(sender_id, f"✅ User removed.")
+            send_message(sender_id, f"✅ User entfernt.")
         else:
-            send_message(sender_id, f"⚠️ User not found in list.")
+            send_message(sender_id, f"⚠️ User nicht gefunden.")
 
     elif args[0] == 'list':
         users = load_users()
-        user_list = '\n'.join([f"• {u['name']} ({u['id']})" for u in users])
+        if not users:
+            send_message(sender_id, "🔍 Keine Nutzer gefunden.")
+        else:
+            lines = [f"• {u['name']} ({u['id']})" for u in users]
+            send_message(sender_id, "👥 *Aktive Reminder-User:*
+" + "\n".join(lines))
