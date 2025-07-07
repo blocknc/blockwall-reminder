@@ -48,18 +48,10 @@ def send_modal(trigger_id):
 
 def send_message(user_id, text, blocks=None):
     if blocks:
-        client.chat_postMessage(channel=user_id, text=text, blocks=[
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": text}
-            },
-            {
-                "type": "actions",
-                "elements": blocks
-            }
-        ])
+        client.chat_postMessage(channel=user_id, text=text, blocks=blocks)
     else:
         client.chat_postMessage(channel=user_id, text=text)
+
 
 def notify_admin_of_done(user_id, comment=None):
     if not is_done(user_id):
