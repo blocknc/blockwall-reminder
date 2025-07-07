@@ -34,6 +34,7 @@ REMINDER_MODAL = {
                 "type": "plain_text_input",
                 "action_id": "comment_input",
                 "multiline": True,
+                "optional": True,
                 "placeholder": {
                     "type": "plain_text",
                     "text": "e.g., Expenses for travel, hotel, invoices..."
