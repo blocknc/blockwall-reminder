@@ -40,21 +40,15 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 def handle_command_async(command, text, sender_id):
     args = text.split()
     if args[0] == 'add':
-        user_arg = args[1]
+        user_arg = args[1].replace('@', '').replace('<@', '').replace('>', '').replace('!', '')
         try:
-            if user_arg.startswith("<@") and user_arg.endswith(">"):
-                slack_id = user_arg[2:-1].replace("!", "")
-                user_info = client.users_info(user=slack_id)
-                display_name = user_info["user"]["profile"].get("display_name") or user_info["user"].get("real_name") or slack_id
-            else:
-                # Try to resolve name to ID from full user list
-                all_users = client.users_list()
-                match = next((u for u in all_users['members'] if u['name'] == user_arg or u['profile'].get('display_name') == user_arg or u['profile'].get('real_name') == user_arg), None)
-                if not match:
-                    send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
-                    return
-                slack_id = match["id"]
-                display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_arg["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
+            all_users = client.users_list()
+            match = next((u for u in all_users['members'] if u['id'] == user_arg or u['name'] == user_arg or u['profile'].get('display_name') == user_arg or u['profile'].get('real_name') == user_arg), None)
+            if not match:
+                send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
+                return
+            slack_id = match["id"]
+            display_name = match["profile"].get("display_name") or match["profile"].get("real_name") or user_argmatch["profile"].get("display_name") or match["profile"].get("real_name") or user_arg
             users = load_users()
             found = False
             for u in users:
@@ -80,7 +74,8 @@ def handle_command_async(command, text, sender_id):
 
     elif args[0] == 'list':
         users = load_users()
-        user_list = '\n'.join([f"• {u['name']} ({u['id']})" for u in users])
+        user_list = '
+'.join([f"• {u['name']} ({u['id']})" for u in users])
         send_message(sender_id, f"👥 Reminder list: {user_list}")
 
     elif args[0] == 'run':
