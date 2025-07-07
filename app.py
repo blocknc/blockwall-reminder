@@ -17,8 +17,18 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 def handle_command_async(command, text, sender_id):
     args = text.split()
     if args[0] == 'add':
-        user_tag = args[1].replace('<@', '').replace('>', '').replace('!', '')
+        user_arg = args[1]
         try:
+            if user_arg.startswith("<@") and user_arg.endswith(">"):
+                slack_id = user_arg[2:-1].replace("!", "")
+            else:
+                # Try to resolve name to ID from full user list
+                all_users = client.users_list()
+                match = next((u for u in all_users['members'] if u['name'] == user_arg or u['profile'].get('display_name') == user_arg or u['profile'].get('real_name') == user_arg), None)
+                if not match:
+                    send_message(sender_id, f"❌ Could not find a Slack user for: {user_arg}")
+                    return
+                slack_id = match["id"]
             slack_user = client.users_info(user=user_tag)
             slack_id = slack_user["user"]["id"]
             display_name = slack_user["user"]["profile"].get("display_name") or slack_user["user"]["real_name"]
