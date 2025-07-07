@@ -18,8 +18,9 @@ REMINDER_MODAL = {
             "text": {
                 "type": "mrkdwn",
                 "text": (
-                    "Hi there! 👋\n\nPlease remember to upload all your receipts for last month."
-                    "\nClick *Done* after you've uploaded them."
+                    "📥 *Receipt Reminder*\n"
+                    "Please upload your receipts for last month.\n"
+                    "Click *Done* once you've completed the upload."
                 )
             }
         },
@@ -29,7 +30,7 @@ REMINDER_MODAL = {
             "optional": True,
             "label": {
                 "type": "plain_text",
-                "text": "Optional comment (e.g., what is missing and why)"
+                "text": "Optional comment (e.g. missing receipts)"
             },
             "element": {
                 "type": "plain_text_input",
@@ -37,7 +38,7 @@ REMINDER_MODAL = {
                 "multiline": True,
                 "placeholder": {
                     "type": "plain_text",
-                    "text": "e.g., Expenses for travel, hotel, invoices..."
+                    "text": "e.g. hotel invoice still missing ..."
                 }
             }
         }
@@ -58,13 +59,16 @@ def send_message(user_id, text, blocks=None):
 
 def notify_admin_of_done(user_id, comment=None):
     if not is_done(user_id):
-        try:
-            profile = client.users_info(user=user_id)
-            display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
-        except:
-            display_name = user_id
+        return  # prevent double-message
+    try:
+        profile = client.users_info(user=user_id)
+        display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
+    except:
+        display_name = user_id
 
-        message = f"✅ {display_name} has marked their receipts as done."
-        if comment:
-            message += f"\n📎 Comment: {comment}"
-        send_message(ADMIN_USER_ID, message)
+    message = f"✅ *{display_name}* marked their receipt upload as _Done_."
+    if comment:
+        message += f"\n📝 Comment: {comment}"
+
+    send_message(ADMIN_USER_ID, message)
+    send_message(user_id, "✅ Thank you! Your receipt status has been marked as *Done*.")
