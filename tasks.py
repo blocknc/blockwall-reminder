@@ -26,40 +26,31 @@ def daily_check():
         return
 
     users = load_users()
-    for user_id in users:
+    for user in users:
+        user_id = user['id']
         if is_done(user_id):
             continue
 
-        if today in [1, 2, 3]:
-            send_message(user_id, "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done.", blocks=[
-                {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {"type": "plain_text", "text": "Mark as Done"},
-                            "action_id": "open_reminder_modal",
-                            "value": user_id
-                        }
-                    ]
-                }
-            ])
-            log.append(f"🔁 Reminder sent to <@{user_id}> (Day {today})")
-        elif today == 4:
-            send_message(user_id, "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!", blocks=[
-                {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {"type": "plain_text", "text": "Mark as Done"},
-                            "action_id": "open_reminder_modal",
-                            "value": user_id
-                        }
-                    ]
-                }
-            ])
-            log.append(f"⚠️ Final notice sent to <@{user_id}>")
+        message = "📌 *Monthly Receipt Reminder*\nPlease upload your receipts and click below when done."
+        if today == 4:
+            message = "⚠️ Final notice: Upload your receipts today or you'll miss the deadline!"
+
+        send_message(user_id, message, blocks=[
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "Mark as Done"},
+                        "action_id": "open_reminder_modal",
+                        "value": user_id
+                    }
+                ]
+            }
+        ])
+
+        log_entry = f"{'⚠️ Final notice' if today == 4 else '🔁 Reminder'} sent to <@{user_id}>"
+        log.append(log_entry)
 
     if log and ADMIN_USER_ID:
         report = f"📅 *Reminder Log – {datetime.today().strftime('%Y-%m-%d')}*\n" + "\n".join(log)
