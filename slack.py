@@ -8,7 +8,7 @@ ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
 
 REMINDER_MODAL = {
     "type": "modal",
-    "title": {"type": "plain_text", "text": "Receipt Reminder"},
+    "title": {"type": "plain_text", "text": "Upload Reminder"},
     "close": {"type": "plain_text", "text": "Close"},
     "submit": {"type": "plain_text", "text": "Done"},
     "callback_id": "upload_done_modal",
@@ -18,7 +18,7 @@ REMINDER_MODAL = {
             "text": {
                 "type": "mrkdwn",
                 "text": (
-                    "📥 *Urgent*\nPlease upload your receipts for last month.\nClick *Done* once you've completed the upload."
+                    "📥 *Receipt Reminder*\nPlease upload your receipts for last month.\nClick *Done* once you've completed the upload."
                 )
             }
         },
@@ -28,7 +28,7 @@ REMINDER_MODAL = {
             "optional": True,
             "label": {
                 "type": "plain_text",
-                "text": "Comment (e.g. missing receipts)"
+                "text": "Optional comment (e.g. missing receipts)"
             },
             "element": {
                 "type": "plain_text_input",
@@ -56,18 +56,17 @@ def send_message(user_id, text, blocks=None):
         print(f"❌ Failed to send message to {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
-    if not is_done(user_id):
-        return  # prevent double-message
     try:
         profile = client.users_info(user=user_id)
         display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
     except:
         display_name = user_id
 
+    saved_comment = comment or get_comment(user_id) or ""
     message = f"✅ *{display_name}* marked their receipt upload as _Done_."
-    saved_comment = comment or get_comment(user_id)
-    if saved_comment:
-        message += f"\n📝 Comment: {saved_comment}"
+    if saved_comment.strip():
+        message += f"\n📝 Comment: {saved_comment.strip()}"
+
     send_message(ADMIN_USER_ID, message)
     send_message(user_id, "✅ Thank you! Your receipt status has been marked as *Done*.")
 
@@ -77,10 +76,10 @@ def generate_status_overview():
     for u in users:
         uid = u['id']
         status = "✅ Done" if is_done(uid) else "🔴 Pending"
-        comment = get_comment(uid)
+        comment = get_comment(uid) or ""
         line = f"• {u['name']} ({uid}) – {status}"
-        if comment:
-            line += f"\n   📝 {comment}"
+        if comment.strip():
+            line += f"\n   📝 {comment.strip()}"
         lines.append(line)
     return "📊 *Status Overview:*\n" + "\n".join(lines)
 
