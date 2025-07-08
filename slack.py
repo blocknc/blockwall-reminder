@@ -28,7 +28,7 @@ REMINDER_MODAL = {
             "optional": True,
             "label": {
                 "type": "plain_text",
-                "text": "Optional comment (e.g. missing receipts)"
+                "text": "Comment (e.g. missing receipts)"
             },
             "element": {
                 "type": "plain_text_input",
