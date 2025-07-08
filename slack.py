@@ -28,7 +28,7 @@ REMINDER_MODAL = {
             "optional": True,
             "label": {
                 "type": "plain_text",
-                "text": "Optional comment (e.g. missing receipts)"
+                "text": "Comment (e.g. missing receipts)"
             },
             "element": {
                 "type": "plain_text_input",
@@ -72,6 +72,7 @@ def send_reminder(user_id):
                 },
                 {
                     "type": "actions",
+                    "block_id": "reminder_action",
                     "elements": [
                         {
                             "type": "button",
@@ -102,6 +103,15 @@ def update_reminder(user_id):
                         "type": "mrkdwn",
                         "text": "✅ *Thanks!* Your receipt upload has been marked as Done."
                     }
+                },
+                {
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "_You can no longer interact with this reminder._"
+                        }
+                    ]
                 }
             ]
         )
