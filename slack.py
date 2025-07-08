@@ -43,7 +43,10 @@ REMINDER_MODAL = {
     ]
 }
 
-def send_modal(trigger_id):
+def send_modal(trigger_id, user_id=None):
+    if user_id and is_done(user_id):
+        send_message(user_id, "⚠️ You've already marked this task as Done.")
+        return
     client.views_open(trigger_id=trigger_id, view=REMINDER_MODAL)
 
 def send_message(user_id, text, blocks=None):
@@ -77,7 +80,8 @@ def send_reminder(user_id):
                         {
                             "type": "button",
                             "text": {"type": "plain_text", "text": "Mark as Done"},
-                            "action_id": "open_reminder_modal"
+                            "action_id": "open_reminder_modal",
+                            "value": "reminder_button"
                         }
                     ]
                 }
@@ -115,12 +119,12 @@ def update_reminder(user_id):
                 }
             ]
         )
+        clear_message_ts(user_id)
     except Exception as e:
         print(f"❌ Failed to update message for {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
     mark_done(user_id, comment)
-    clear_message_ts(user_id)
     try:
         profile = client.users_info(user=user_id)
         display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
