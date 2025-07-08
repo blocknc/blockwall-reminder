@@ -56,6 +56,16 @@ def reset_status():
             del u["ts"]
     save_users(users)
 
+def reset_status_for_user(user_id):
+    if not os.path.exists(STATUS_FILE):
+        return
+    with open(STATUS_FILE, "r") as f:
+        status = json.load(f)
+    if user_id in status:
+        del status[user_id]
+    with open(STATUS_FILE, "w") as f:
+        json.dump(status, f, indent=2)
+
 def get_display_name(user_id):
     users = load_users()
     for u in users:
