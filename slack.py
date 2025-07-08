@@ -56,6 +56,8 @@ def send_message(user_id, text, blocks=None):
         print(f"❌ Failed to send message to {user_id}: {e}")
 
 def send_reminder(user_id):
+    if is_done(user_id):
+        return
     try:
         result = client.chat_postMessage(
             channel=user_id,
@@ -108,7 +110,7 @@ def update_reminder(user_id):
 
 def notify_admin_of_done(user_id, comment=None):
     mark_done(user_id, comment)
-
+    clear_message_ts(user_id)
     try:
         profile = client.users_info(user=user_id)
         display_name = profile['user']['profile'].get('display_name') or profile['user']['real_name']
