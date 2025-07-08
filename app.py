@@ -6,7 +6,7 @@ import os
 import json
 import threading
 from store import load_users, save_users, mark_done, is_done, get_display_name, reset_status
-from slack import send_modal, send_message, notify_admin_of_done, handle_status_command, update_reminder
+from slack import send_modal, send_message, notify_admin_of_done, handle_status_command, update_reminder, handle_reset_command
 from tasks import daily_check
 from datetime import datetime
 
@@ -49,7 +49,7 @@ def slack_interact():
     elif payload["type"] == "block_actions":
         action_id = payload["actions"][0]["action_id"]
         if action_id == "open_reminder_modal":
-            send_modal(payload["trigger_id"])
+            send_modal(payload["trigger_id"], payload["user"]["id"])
         return make_response("", 200)
 
     return make_response("", 200)
@@ -118,8 +118,8 @@ def handle_command_async(command, text, sender_id):
         handle_status_command(sender_id)
 
     elif cmd == 'reset':
-        reset_status()
-        send_message(sender_id, "🧹 Status aller Nutzer zurückgesetzt.")
+        target_username = args[1].replace('@', '') if len(args) > 1 else None
+        handle_reset_command(sender_id, target_username)
 
     elif cmd == 'run':
         daily_check(force=True)
