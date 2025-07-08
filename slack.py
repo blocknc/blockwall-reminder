@@ -28,7 +28,7 @@ REMINDER_MODAL = {
             "optional": True,
             "label": {
                 "type": "plain_text",
-                "text": "Comment (e.g. missing receipts)"
+                "text": "Optional comment (e.g. missing receipts)"
             },
             "element": {
                 "type": "plain_text_input",
@@ -124,6 +124,10 @@ def update_reminder(user_id):
         print(f"❌ Failed to update message for {user_id}: {e}")
 
 def notify_admin_of_done(user_id, comment=None):
+    if is_done(user_id):
+        send_message(user_id, "⚠️ You've already marked this task as Done.")
+        return
+
     mark_done(user_id, comment)
     try:
         profile = client.users_info(user=user_id)
