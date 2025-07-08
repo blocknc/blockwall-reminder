@@ -1,7 +1,7 @@
 # slack.py
 import os
 from slack_sdk import WebClient
-from store import is_done, get_comment, load_users, mark_done, save_message_ts, get_message_ts, clear_message_ts
+from store import is_done, get_comment, load_users, mark_done, save_message_ts, get_message_ts, clear_message_ts, reset_status_for_user
 
 client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
 ADMIN_USER_ID = os.environ.get("SLACK_ADMIN_USER_ID")
@@ -159,3 +159,21 @@ def generate_status_overview():
 def handle_status_command(user_id):
     overview = generate_status_overview()
     send_message(user_id, overview)
+
+def handle_reset_command(user_id, target_username=None):
+    if not target_username:
+        from store import reset_status
+        reset_status()
+        send_message(user_id, "🧹 Status aller Nutzer zurückgesetzt.")
+        return
+
+    try:
+        all_users = client.users_list()
+        match = next((u for u in all_users['members'] if u['name'] == target_username or u['profile'].get('display_name') == target_username or u['profile'].get('real_name') == target_username), None)
+        if not match:
+            send_message(user_id, f"❌ Konnte keinen Slack-User finden: {target_username}")
+            return
+        reset_status_for_user(match["id"])
+        send_message(user_id, f"✅ Status für {target_username} wurde zurückgesetzt.")
+    except Exception as e:
+        send_message(user_id, f"❌ Fehler beim Zurücksetzen: {str(e)}")
